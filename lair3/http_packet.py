@@ -55,6 +55,9 @@ class HttpPacketHeader(Mapping):
             
         self.dcase_hash.update({key.lower(): value})
 
+    def __contains__(self, key):
+        return self.__getitem__(key) is not None
+
     def __str__(self, prefix = ''):
         string = prefix
         
@@ -151,6 +154,9 @@ class HttpPacket(object):
         
     def __setitem__(self, key, value):
         self.headers[key] = value
+    
+    def __contains__(self, key):
+        return key in self.headers
 
     @property
     def body(self):
