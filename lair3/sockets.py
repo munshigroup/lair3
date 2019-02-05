@@ -156,7 +156,7 @@ class SocketParams(object):
         else:
             self.server = False
         
-        if 'Comm' in kwargs:
+        if 'Comm' in kwargs and kwargs['Comm'] is not None:
             if issubclass(kwargs['Comm'], SocketComm) == True:
                 self.comm = kwargs['Comm']()
             else:
