@@ -111,7 +111,7 @@ class SocketParams(object):
         else:
             self.ssl_cipher = None
             
-        if 'SSLCert' in kwargs and os.path.isfile(kwargs['SSLCert']) == True:
+        if 'SSLCert' in kwargs and kwargs['SSLCert'] is not None and os.path.isfile(kwargs['SSLCert']) == True:
             try:
                 fd = file(kwargs['SSLCert'], 'rb')
                 self.ssl_cert = fd.read()
@@ -121,7 +121,7 @@ class SocketParams(object):
         else:
             self.ssl_cert = None
             
-        if 'SSLClientCert' in kwargs and os.path.isfile(kwargs['SSLClientCert']) == True:
+        if 'SSLClientCert' in kwargs and kwargs['SSLClientCert'] is not None and os.path.isfile(kwargs['SSLClientCert']) == True:
             try:
                 fd = file(kwargs['SSLClientCert'], 'rb')
                 self.ssl_client_cert = fd.read()
@@ -131,7 +131,7 @@ class SocketParams(object):
         else:
             self.ssl_client_cert = None
             
-        if 'SSLClientKey' in kwargs and os.path.isfile(kwargs['SSLClientKey']) == True:
+        if 'SSLClientKey' in kwargs and kwargs['SSLClientKey'] is not None and os.path.isfile(kwargs['SSLClientKey']) == True:
             try:
                 fd = file(kwargs['SSLClientKey'], 'rb')
                 self.ssl_client_key = fd.read()
