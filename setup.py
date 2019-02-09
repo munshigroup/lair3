@@ -5,7 +5,7 @@ with open("README.md", "r") as fd:
 
 setuptools.setup(
     name="lair3",
-    version="0.1.3",
+    version="0.1.4",
     author="The Munshi Group",
     author_email="support@munshigroup.com",
     description="AmmuNation Networking Library",
