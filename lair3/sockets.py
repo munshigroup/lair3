@@ -57,12 +57,12 @@ class SocketParams(object):
         else:
             self.localhost = '0.0.0.0'
             
-        if 'PeerPort' in kwargs:
+        if 'PeerPort' in kwargs and kwargs['PeerPort'] is not None:
             self.peerport = int(kwargs['PeerPort'])
         else:
             self.peerport = 0
         
-        if 'LocalPort' in kwargs:
+        if 'LocalPort' in kwargs and kwargs['LocalPort'] is not None:
             self.localport = int(kwargs['LocalPort'])
         else:
             self.localport = 0
