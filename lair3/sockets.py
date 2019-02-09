@@ -1086,7 +1086,7 @@ class LocalComm(SocketComm):
             sock = socket.socket(socket.AF_INET, type, proto)
         bare_sock = sock
 
-        if (param.localport != 0) or (param.localhost is not None):
+        if ((param.localport is not None) and (param.localport != 0)) or (param.localhost is not None):
             try:
                 if compat.is_windows() == False:
                     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
