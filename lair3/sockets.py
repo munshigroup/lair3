@@ -179,9 +179,18 @@ class SocketParams(object):
             self.retries = int(kwargs['Retries'])
         else:
             self.retries = 0
-
+        
+        # proposed change for 0.1.5
         if 'Timeout' in kwargs:
-            self.timeout = int(kwargs['Timeout'])
+            if kwargs['Timeout'] is None:
+                # handle None cast
+                self.timeout = None
+            else:
+                # we set a timeout of 0 to None to disable timeout (instead of making socket non-blocking)
+                # this value is ONLY used for socket.connect()
+                self.timeout = int(kwargs['Timeout'])
+                if self.timeout == 0:
+                    self.timeout = None
         else:
             self.timeout = 5
 
