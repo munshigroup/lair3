@@ -179,7 +179,7 @@ class SocketParams(object):
             self.retries = int(kwargs['Retries'])
         else:
             self.retries = 0
-        
+
         # proposed change for 0.1.5
         if 'Timeout' in kwargs:
             if kwargs['Timeout'] is None:
@@ -340,6 +340,19 @@ def getsockaddr(host, port):
         return retval[0][4]
     else:
         return None
+
+def parsesockaddr(saddr):
+    """
+    Returns a list of [family, host, port] from a Pythonic sock address
+    """
+    if is_ipv6(saddr[0]) == True:
+        af = socket.AF_INET6
+        host, port, _, _ = saddr
+    elif is_ipv4(saddr[0]) == True:
+        af = socket.AF_INET
+        host, port = saddr
+
+    return [af, host, port]
 
 def getsrcaddr(dest = '8.8.8.8'):
     """
@@ -900,7 +913,7 @@ class UdpSock(SockBase):
             if (rv is not None) and (rv != ([], [], [])) and (len(rv[0]) > 0) and (rv[0][0] == self.fd):
                 self.sock.setblocking(0)
                 data, saddr = self.sock.recvfrom(length)
-                host, port = saddr
+                af, host, port = parsesockaddr(saddr)
                 
                 return [data, host, port]
             else:
@@ -941,7 +954,7 @@ class IpSock(SockBase):
         raise RuntimeError("IP sockets must use recvfrom(), not read()")
         
     def sendto(self, gram, peerhost, flags = 0):
-        dest = (peerhost, 0)
+        dest = getsockaddr(peerhost, 0)
         
         if (compat.is_freebsd() == True or compat.is_netbsd() == True or compat.is_macosx() == True):
             # byteswap
@@ -966,7 +979,7 @@ class IpSock(SockBase):
             rv = select.select([self.sock], [], [], timeout)
             if rv != ([],[],[]) and rv[0][0] == self.sock:
                 data, saddr = super(IpSock, self).recvfrom(length)
-                host, port = saddr
+                af, host, port = parsesockaddr(saddr)
                 
                 return [data, host]
             else:
@@ -1120,36 +1133,38 @@ class LocalComm(SocketComm):
                 sock.initsock(param)
         else:
             chain = []
-            ip = param.peerhost
-            port = param.peerport
 
-            if param.proxies is not None:
-                chain = copy.copy(param.proxies)
-                chain.append(['host', param.peerhost, param.peerport])
-                ip = chain[0][1]
-                port = int(chain[0][2])
+            if param.peerhost is not None:
+                ip = param.peerhost
+                port = param.peerport
 
-            try:
-                sock.settimeout(param.timeout)
-                sock.connect(getsockaddr(ip, port))
-            except socket.timeout as e:
-                sock.close()
-                raise xcepts.ConnectionTimeout(ip, port)
-            except socket.error as e:
-                if (e.errno == errno.EHOSTUNREACH or e.errno == errno.ENETDOWN or e.errno == errno.ENETUNREACH or e.errno == errno.ENETRESET or e.errno == errno.EHOSTDOWN or e.errno == errno.EACCES or e.errno == errno.EINVAL or e.errno == errno.ENOPROTOOPT):
-                    sock.close()
-                    raise xcepts.HostUnreachable(ip, port)
-                elif (e.errno == errno.EADDRNOTAVAIL or e.errno == errno.EADDRINUSE):
-                    sock.close()
-                    raise xcepts.InvalidDestination(ip, port)
-                elif (e.errno == errno.ETIMEDOUT or e.message == 'timed out'):
+                if param.proxies is not None:
+                    chain = copy.copy(param.proxies)
+                    chain.append(['host', param.peerhost, param.peerport])
+                    ip = chain[0][1]
+                    port = int(chain[0][2])
+
+                try:
+                    sock.settimeout(param.timeout)
+                    sock.connect(getsockaddr(ip, port))
+                except socket.timeout as e:
                     sock.close()
                     raise xcepts.ConnectionTimeout(ip, port)
-                elif (e.errno == errno.ECONNRESET or e.errno == errno.ECONNREFUSED or e.errno == errno.ENOTCONN or e.errno == errno.ECONNABORTED):
-                    sock.close()
-                    raise xcepts.ConnectionRefused(ip, int(port))
-            finally:
-                sock.settimeout(None)
+                except socket.error as e:
+                    if (e.errno == errno.EHOSTUNREACH or e.errno == errno.ENETDOWN or e.errno == errno.ENETUNREACH or e.errno == errno.ENETRESET or e.errno == errno.EHOSTDOWN or e.errno == errno.EACCES or e.errno == errno.EINVAL or e.errno == errno.ENOPROTOOPT):
+                        sock.close()
+                        raise xcepts.HostUnreachable(ip, port)
+                    elif (e.errno == errno.EADDRNOTAVAIL or e.errno == errno.EADDRINUSE):
+                        sock.close()
+                        raise xcepts.InvalidDestination(ip, port)
+                    elif (e.errno == errno.ETIMEDOUT or e.message == 'timed out'):
+                        sock.close()
+                        raise xcepts.ConnectionTimeout(ip, port)
+                    elif (e.errno == errno.ECONNRESET or e.errno == errno.ECONNREFUSED or e.errno == errno.ENOTCONN or e.errno == errno.ECONNABORTED):
+                        sock.close()
+                        raise xcepts.ConnectionRefused(ip, int(port))
+                finally:
+                    sock.settimeout(None)
             
             if param.bare == False:
                 if param.proto == 'tcp':
@@ -1300,7 +1315,7 @@ class LocalComm(SocketComm):
             if response[1:2] != "\x00":
                 raise xcepts.ConnectionProxyError(host, port, type, "Proxy server responded with error code {}".format(struct.unpack("B", ret[1:2])[0]))
         else:
-            raise ValueError("Invalid proxy type {} specified".format(type))
+            raise ValueError("Invalid proxy type '{}' specified".format(type))
             
             
 
