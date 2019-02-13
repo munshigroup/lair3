@@ -1,11 +1,11 @@
 import bombfuse
+import datetime
 import OpenSSL
 import random
 import select
 import socket
 import sockets
 import amncore.sync as sync
-import time
 import amncore.xcepts as xcepts
 
 class SecureSock(object):
@@ -44,9 +44,8 @@ class SecureSock(object):
         @classmethod
         def ssl_generate_certificate(self):
             yr = 24 * 3600 * 365
-            # I apologize for this mess
-            vf = time.strftime("%Y%m%d%H%M%SZ", time.gmtime(time.time() - random.randrange(yr * 3) - yr)) # valid from date
-            vt = time.strftime("%Y%m%d%H%M%SZ", time.gmtime(int(time.mktime(time.strptime(vf, "%Y%m%d%H%M%SZ"))) + (random.randrange(9) + 1) * yr)) # valid to date
+            vf = datetime.datetime.now() - datetime.timedelta(seconds = (random.randrange(yr * 3) + yr)).strftime("%Y%m%d%H%M%SZ")
+            vt = (vf + datetime.timedelta(seconds = ((random.randrange(9) + 1) * yr))).strftime("%Y%m%d%H%M%SZ")
             subject = self.ssl_generate_subject()
             issuer = self.ssl_generate_issuer()
             key = OpenSSL.crypto.PKey()
