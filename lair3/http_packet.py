@@ -68,11 +68,18 @@ class HttpPacketHeader(Mapping):
                 else:
                     string += "X-{}: {}\r\n".format(paynspray.rando.rand_text_alphanumeric(random.randrange(30) + 5), paynspray.rando.rand_text_alphanumeric(random.randrange(1024) + 1))
         
-        for var, val in self._dict.iteritems():
-            if self.fold and self.fold == True:
-                string += "{}:\r\n\t{}\r\n".format(var, val)
-            else:
-                string += "{}: {}\r\n".format(var, val)
+        if hasattr(self._dict, "iteritems") == True:
+            for var, val in self._dict.iteritems():
+                if self.fold and self.fold == True:
+                    string += "{}:\r\n\t{}\r\n".format(var, val)
+                else:
+                    string += "{}: {}\r\n".format(var, val)
+        else:
+            for var, val in iter(self._dict.items()):
+                if self.fold and self.fold == True:
+                    string += "{}:\r\n\t{}\r\n".format(var, val)
+                else:
+                    string += "{}: {}\r\n".format(var, val)
                 
         string += "\r\n"
         
@@ -146,9 +153,14 @@ class HttpPacket(object):
         if key in self.headers:
             return self.headers[key]
             
-        for k, v in self.headers.iteritems():
-            if (str(k).lower() == str(key).lower()):
-                return v
+        if hasattr(self.headers, "iteritems") == True:
+            for k, v in self.headers.iteritems():
+                if (str(k).lower() == str(key).lower()):
+                    return v
+        else:
+            for k, v in iter(self.headers.items()):
+                if (str(k).lower() == str(key).lower()):
+                    return v
         
         return None
         
@@ -464,18 +476,33 @@ class HttpRequest(HttpPacket):
     @property
     def param_string(self):
         params = []
-        for param, value in self.uri_parts['QueryString'].iteritems():
-            if self.junk_params:
-                for i in range(0, random.randrange(10) + 5):
-                    params.append(paynspray.rando.rand_text_alpha(random.randrange(16) + 5) + '=' + paynspray.rando.rand_text_alpha(random.randrange(10) + 1))
-            if type(value) == list:
-                for subvalue in value:
-                    params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode) + '=' + paynspray.encoding.uri_encode(subvalue, self.uri_encode_mode))
-            else:
-                if value is not None:
-                    params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode) + '=' + paynspray.encoding.uri_encode(value, self.uri_encode_mode))
+        
+        if hasattr(self.uri_parts['QueryString'], "iteritems") == True:
+            for param, value in self.uri_parts['QueryString'].iteritems():
+                if self.junk_params:
+                    for i in range(0, random.randrange(10) + 5):
+                        params.append(paynspray.rando.rand_text_alpha(random.randrange(16) + 5) + '=' + paynspray.rando.rand_text_alpha(random.randrange(10) + 1))
+                if type(value) == list:
+                    for subvalue in value:
+                        params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode) + '=' + paynspray.encoding.uri_encode(subvalue, self.uri_encode_mode))
                 else:
-                    params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode))
+                    if value is not None:
+                        params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode) + '=' + paynspray.encoding.uri_encode(value, self.uri_encode_mode))
+                    else:
+                        params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode))
+        else:
+            for param, value in iter(self.uri_parts['QueryString'].items()):
+                if self.junk_params:
+                    for i in range(0, random.randrange(10) + 5):
+                        params.append(paynspray.rando.rand_text_alpha(random.randrange(16) + 5) + '=' + paynspray.rando.rand_text_alpha(random.randrange(10) + 1))
+                if type(value) == list:
+                    for subvalue in value:
+                        params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode) + '=' + paynspray.encoding.uri_encode(subvalue, self.uri_encode_mode))
+                else:
+                    if value is not None:
+                        params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode) + '=' + paynspray.encoding.uri_encode(value, self.uri_encode_mode))
+                    else:
+                        params.append(paynspray.encoding.uri_encode(param, self.uri_encode_mode))
 
         if self.junk_params:
             for i in range(0, random.randrange(10) + 5):
@@ -603,17 +630,30 @@ class HttpResponse(HttpPacket):
 
             if mach is not None:
                 key_vals = dict(mach)
-                for k, v in key_vals.iteritems():
-                    name = str(k).lower()
-                    if name == 'path':
-                        continue
-                    if name == 'expires':
-                        continue
-                    if name == 'domain':
-                        continue
-                    if name == 'max-age':
-                        continue
-                    cookies += "{}={}; ".format(k, v)
+                if hasattr(key_vals, "iteritems") == True:
+                    for k, v in key_vals.iteritems():
+                        name = str(k).lower()
+                        if name == 'path':
+                            continue
+                        if name == 'expires':
+                            continue
+                        if name == 'domain':
+                            continue
+                        if name == 'max-age':
+                            continue
+                        cookies += "{}={}; ".format(k, v)
+                else:
+                    for k, v in iter(key_vals.items()):
+                        name = str(k).lower()
+                        if name == 'path':
+                            continue
+                        if name == 'expires':
+                            continue
+                        if name == 'domain':
+                            continue
+                        if name == 'max-age':
+                            continue
+                        cookies += "{}={}; ".format(k, v)
             else:
                 return cookies
                 
